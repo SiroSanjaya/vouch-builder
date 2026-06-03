@@ -13,7 +13,7 @@ This task is a 2-hour slice of that real problem. At Vouch our builders own feat
 In `/data` you'll find a week of real-shape front-desk events for one hotel, **in two formats:**
 
 - `events.json` — structured events, logged by the system on most nights.
-- `night-logs.md` — one night was logged as free text by relief staff because the system was down.
+- `night-logs.md` — one night was logged as free text by relief staff because the system was down. Relief staff write in whatever language they're comfortable in, so some entries may not be in English.
 
 Both are part of the same handover history. A few things to know:
 - A night shift runs roughly 23:00–07:00, so a single shift spans two calendar dates.
