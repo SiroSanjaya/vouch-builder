@@ -7,11 +7,14 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
   try {
-    let { events, nightLogs } = req.body;
-    // Fallback to local data if not provided
+    // Ensure request body exists (Vercel may give undefined)
+    const body = req.body || {};
+    let { events, nightLogs } = body;
+    // Use repository data when request body is empty
     if (!events || !nightLogs) {
-      const eventsPath = path.join(__dirname, '../../data/events.json');
-      const nightLogsPath = path.join(__dirname, '../../data/night-logs.md');
+      // process.cwd() points to project root in Vercel
+      const eventsPath = path.join(process.cwd(), 'data', 'events.json');
+      const nightLogsPath = path.join(process.cwd(), 'data', 'night-logs.md');
       const eventsFile = await fs.readFile(eventsPath, 'utf-8');
       events = JSON.parse(eventsFile);
       nightLogs = await fs.readFile(nightLogsPath, 'utf-8');
