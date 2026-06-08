@@ -6,8 +6,8 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     // Return sample handover on GET for smoke testing
     try {
-      const eventsPath = path.join(process.cwd(), 'data', 'events.json');
-      const nightLogsPath = path.join(process.cwd(), 'data', 'night-logs.md');
+      const eventsPath = path.join(__dirname, '..', 'data', 'events.json');
+      const nightLogsPath = path.join(__dirname, '..', 'data', 'night-logs.md');
       const eventsFile = await fs.readFile(eventsPath, 'utf-8');
       const nightLogs = await fs.readFile(nightLogsPath, 'utf-8');
       const events = JSON.parse(eventsFile);
@@ -28,8 +28,8 @@ module.exports = async (req, res) => {
     let { events, nightLogs } = body;
 
     if (!events || !nightLogs) {
-      const eventsPath = path.join(process.cwd(), 'data', 'events.json');
-      const nightLogsPath = path.join(process.cwd(), 'data', 'night-logs.md');
+      const eventsPath = path.join(__dirname, '..', 'data', 'events.json');
+      const nightLogsPath = path.join(__dirname, '..', 'data', 'night-logs.md');
       const eventsFile = await fs.readFile(eventsPath, 'utf-8');
       events = JSON.parse(eventsFile);
       nightLogs = await fs.readFile(nightLogsPath, 'utf-8');
