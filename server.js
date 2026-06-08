@@ -15,8 +15,9 @@ app.use(express.json());
 // Main endpoint for handover generation
 app.post('/api/handover', async (req, res) => {
   try {
-    let events = req.body.events;
-    let nightLogs = req.body.nightLogs;
+    const body = req.body || {};
+    let events = body.events;
+    let nightLogs = body.nightLogs;
 
     // Fallback to local files if not provided in the request
     if (!events || !nightLogs) {
@@ -67,6 +68,26 @@ app.post('/api/handover', async (req, res) => {
       stack: error.stack
     });
     res.status(500).json({ error: 'An error occurred during handover generation.', detail: error.message });
+  }
+});
+
+// Helpful GET route for quick smoke test using bundled sample data.
+app.get('/api/handover', async (req, res) => {
+  try {
+    const eventsPath = path.join(__dirname, 'data', 'events.json');
+    const nightLogsPath = path.join(__dirname, 'data', 'night-logs.md');
+    const eventsFile = await fs.readFile(eventsPath, 'utf-8');
+    const nightLogs = await fs.readFile(nightLogsPath, 'utf-8');
+    const events = JSON.parse(eventsFile);
+
+    const handover = await generateHandover(events, nightLogs);
+    return res.json(handover);
+  } catch (err) {
+    logger.error({ err }, 'Failed to generate sample handover for GET /api/handover');
+    return res.status(500).json({
+      message: 'GET /api/handover is intended as a sample handover smoke test. Use POST /api/handover for custom data.',
+      error: err.message
+    });
   }
 });
 

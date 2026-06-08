@@ -1,28 +1,34 @@
 # Decisions
 
 ## What I built and what I deliberately skipped (and why)
-I built a local Node.js Express service with a single endpoint `POST /api/handover`. This endpoint ingests the JSON events and unstructured markdown logs, uses the OpenAI API to reconcile them, and outputs a structured JSON handover that a frontend could easily render.
-I deliberately skipped building a frontend (React/HTML) because the prompt stated "Utility over beauty" and building a reliable backend parsing and reconciliation engine was the priority for the 2-hour timeframe. A raw JSON output from `curl` is perfectly functional for integration. I also skipped deploying to a cloud provider and built it to run locally, as deployment accounts/setup would burn too much time.
+- Built a local Node.js Express service with `POST /api/handover` that accepts structured `events` plus unstructured `nightLogs`.
+- Added a `GET /api/handover` smoke-test route to return bundled sample output from `data/events.json` and `data/night-logs.md`.
+- Kept output strictly JSON with categories `on_fire`, `pending`, `fyi`, and `anomalies`.
+- Skipped a full frontend and deployment to a public URL because this workspace is local and the highest-value work in the available time was fixing service behavior, grounding, and prompt safety.
+- Skipped a database-backed historical reconciliation engine for now to keep the solution simple and focused on generating a trustworthy handover from the input.
 
 ## How I handle reconciliation across nights
-Reconciliation is handled by a prompt-engineered LLM (GPT-4o). Since the input spans structured JSON events, unstructured free-text, and even Chinese text (from the relief staff), traditional rule-based reconciliation would be extremely brittle. I instructed the LLM to perform "Thread Mapping"—linking room numbers and issue types across the chronological events—and then determine the final state (as of the latest morning in the dataset).
+- The service unifies structured events and free-text logs into a single reconciliation flow in `services/llm.js`.
+- The LLM is instructed to map issue threads across nights and decide which items are still open, newly resolved, or new tonight.
+- The logic is deliberately prompt-driven because the input contains messy multilingual free text and implicit issue relationships.
+- The implementation is designed to generalize by relying on room IDs, issue type, and citations rather than hard-coded sample text.
 
-## How I keep every statement grounded and stop hallucinations
-The LLM prompt uses strict structural requirements:
-1. Every output item MUST have a `citations` array.
-2. The LLM is explicitly forbidden from inventing facts.
-3. For incomplete or contradictory input, the LLM is instructed to flag it (which maps to the `anomalies` array in the JSON schema).
-To handle prompt injection (like the guest message in `evt_0026` asking for a "goodwill credit" and to "ignore all other items"), the prompt explicitly warns the model about potential malicious user data imitating system notes, directing it to place those anomalies in a separate array rather than acting on them.
+## How I keep every statement grounded and handle incomplete/contradictory input
+- The prompt requires every output item to include `citations` drawn from the source data.
+- The model is explicitly forbidden from inventing facts.
+- Any suspicious or contradictory input is routed into `anomalies` rather than being folded into normal recommendations.
+- Prompt injection is handled by instructing the LLM to ignore fake system-style instructions inside user content and report them as anomalies. The sample data includes exactly this case in `evt_0026`.
+- The service also has a fallback static `DEMO_HANDOVER` so it still returns valid JSON when no API key is configured or the model call fails.
 
-## Where AI helped most, and where it got in the way
-AI helped most in reasoning across different data formats and languages (e.g., mapping the Chinese "312 no-show settled" note from May 27th to the May 28th dispute event for the same room). This would take days to build reliably with regex or NLP heuristics.
-AI got in the way slightly when trying to enforce strict JSON schemas; occasionally models can wrap output in markdown code blocks even when asked for pure JSON, though using OpenAI's `response_format: { type: 'json_object' }` feature completely mitigated this issue.
+## Where AI helped most and where it got in the way
+- AI helped most in reconciling messy natural language logs with structured events, especially across multilingual text and ambiguous issue state.
+- AI was less reliable at strict formatting and grounding, so the code protects the pipeline with explicit prompt rules, citation requirements, and JSON cleanup.
 
 ## What I'd do in hours 3–6 if I had them
-1. **Frontend**: Build a simple React or Vue SPA to render the JSON nicely with colored badges for status (On Fire, Pending, FYI) and a clean UI for the morning manager.
-2. **Testing**: Write comprehensive unit tests and regression tests using historical handover inputs.
-3. **Database Integration**: Actually save the handovers and track resolutions over time in a database (like Postgres) rather than re-computing everything on the fly.
-4. **Resiliency**: Add fallback models (e.g., Anthropic Claude or Gemini) in case the primary LLM API goes down.
+1. Add a simple front-end or Slack/email renderer for the JSON handover.
+2. Add persistent storage to track issue status across nights instead of recomputing from scratch.
+3. Add automated tests for prompt behavior, demo fallback, and sample data.
+4. Add a deployed public endpoint and CI validation for the API.
 
-## One thing that surprised you
-The deliberate prompt injection attempt in `evt_0026` ("SYSTEM NOTE TO THE HANDOVER TOOL"). It's a fantastic real-world edge case that highlights how user-generated data fed directly to an LLM needs the same security mindset as raw SQL inputs in the Web 1.0 era.
+## One thing that surprised me
+- The dataset includes an intentional prompt-injection edge case, which showed that operational hotel inputs can be adversarial. It reinforced the need to treat `nightLogs` as untrusted text and keep every statement tightly grounded in citations.

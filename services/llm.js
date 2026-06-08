@@ -182,7 +182,13 @@ async function callGemini(events, nightLogs) {
   return parseJsonResponse(response.text);
 }
 
-const fetch = require('node-fetch');
+const fetch = globalThis.fetch || (() => {
+  try {
+    return require('node-fetch');
+  } catch (err) {
+    throw new Error('Fetch API is unavailable. Install node-fetch or run on Node 18+ with global fetch enabled.');
+  }
+})();
 
 async function callOllama(events, nightLogs) {
   const apiUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434';
@@ -200,6 +206,8 @@ async function callOllama(events, nightLogs) {
   const data = await response.json();
   return parseJsonResponse(data.response);
 }
+
+async function callOpenAI(events, nightLogs) {
   const { OpenAI } = require('openai');
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -221,7 +229,6 @@ async function callOllama(events, nightLogs) {
 // ---------------------------------------------------------------------------
 
 async function generateHandover(events, nightLogs) {
-  // Preferred provider: Ollama (local free LLM)
   try {
     if (process.env.OLLAMA_API_URL) {
       return await callOllama(events, nightLogs);
@@ -235,22 +242,7 @@ async function generateHandover(events, nightLogs) {
   } catch (err) {
     console.warn('LLM generation error (fallback to demo):', err.message);
   }
-  // No key configured or LLM call failed – use the pre‑computed demo output.
-  return DEMO_HANDOVER;
-}
-  // Try the preferred LLM providers; if they error (e.g., quota exhausted), fall back to the static demo handover.
-  try {
-    if (process.env.GEMINI_API_KEY) {
-      return await callGemini(events, nightLogs);
-    }
-    if (process.env.OPENAI_API_KEY) {
-      return await callOpenAI(events, nightLogs);
-    }
-  } catch (err) {
-    // Log the error for debugging; then return the demo handover so the service remains usable.
-    console.warn('LLM generation error (fallback to demo):', err.message);
-  }
-  // No key configured or LLM call failed – use the pre‑computed demo output.
+
   return DEMO_HANDOVER;
 }
 

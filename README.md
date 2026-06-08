@@ -24,6 +24,8 @@ npm start
 
 The server starts on port 3000 by default.
 
+> Note: This repository is configured for local execution. There is no public deployment URL in the current workspace.
+
 ## Usage
 
 ### Generate a handover using the bundled sample data
@@ -109,6 +111,9 @@ curl -s -X POST http://localhost:3000/api/handover \
 │   ├── events.json     # Sample structured events
 │   └── night-logs.md   # Sample unstructured night log
 ├── AGENTS.md           # Instructions for AI agents and contributors
+├── CLAUDE.md           # Claude integration guidance
+├── CURSOR_RULES.md     # Operational rules for agents and contributors
+├── AI_CONVERSATION.md  # Conversation export / debugging summary
 ├── DECISIONS.md        # Key design decisions and tradeoffs
 └── .env.example        # Environment variable template
 ```
@@ -121,4 +126,18 @@ All logs are emitted as JSON via `pino`. Each handover generation emits:
 - `generate_handover_error` — error message
 
 To debug a bad handover, search logs by `hotel` ID and `night` timestamp.
+
+## Additional Docs
+
+- `AGENTS.md` — how to work with this codebase and run the service.
+- `CLAUDE.md` — how to adapt the handover flow for Anthropic Claude.
+- `CURSOR_RULES.md` — operational rules and safety guidance.
+- `AI_CONVERSATION.md` — conversation export covering real work and debugging.
+- `DEPLOYMENT_NOTES.md` — how to run locally and the current local-only deployment status.
+- `DECISIONS.md` — why the system is built this way and what was skipped.
+
+## Deployment Status
+
+This repo is currently configured for local execution only. There is no public deployment URL in the workspace yet.
+If you want to run it locally, use `npm start` and call `POST /api/handover` on `http://localhost:3000`.
 
