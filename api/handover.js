@@ -1,4 +1,4 @@
-const { generateHandover } = require('../../services/llm');
+const { generateHandover } = require('../services/llm');
 const fs = require('fs').promises;
 const path = require('path');
 
