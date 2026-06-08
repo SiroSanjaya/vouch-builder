@@ -28,13 +28,50 @@ The server starts on port 3000 by default.
 
 ## Usage
 
-### Generate a handover using the bundled sample data
+### Local usage
 
 **Linux/macOS (bash):**
 ```bash
 curl -s -X POST http://localhost:3000/api/handover \
   -H "Content-Type: application/json" \
   -d '{}' | jq
+```
+
+### Vercel deployment
+
+If deployed to Vercel, the service is available at:
+
+- `GET https://<your-deployment>.vercel.app/api/handover` — sample smoke test
+- `POST https://<your-deployment>.vercel.app/api/handover` — custom payload
+
+Example public demo:
+```bash
+curl -s -X GET https://vouch-builder.vercel.app/api/handover | jq
+```
+
+### Generate a handover by providing your own data
+
+**Linux/macOS (bash):**
+```bash
+curl -s -X POST http://localhost:3000/api/handover \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": {
+      "hotel": { "id": "my-hotel", "name": "My Hotel", "timezone": "+08:00" },
+      "events": [
+        {
+          "id": "evt_001",
+          "timestamp": "2026-05-26T01:00:00+08:00",
+          "type": "maintenance",
+          "room": "112",
+          "guest": "John Doe",
+          "description": "Aircon not working. Guest moved to 115.",
+          "status": "unresolved"
+        }
+      ]
+    },
+    "nightLogs": "Quiet night. One issue with room 112 aircon, already handled by moving the guest."
+  }' | jq
 ```
 
 **Windows (PowerShell):**
